@@ -44,12 +44,12 @@ void setup() {
 void loop() {
 
     for (int i = -255 / 2; i < 256 / 2; ++i){
-      motor1.setSpeed(2 * i);   // Motor 1 runs forward at 50% speed.
+      motor1.setSpeed(2 * i);
       delay(100);
     }
 
     for (int i = 256 / 2; i > -256 / 2; --i){
-      motor1.setSpeed(2 * i);   // Motor 1 runs forward at 50% speed.
+      motor1.setSpeed(2 * i);
       delay(100);
     }
 }
