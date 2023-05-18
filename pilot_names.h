@@ -3,8 +3,8 @@
 #ifndef pilot_names
 #define pilot_names
 
-#define p_ch	69
-#define p_ch_m	70
+#define p_ch	70
+#define p_ch_m	69
 #define p_ch_p	71
 #define p_next	64
 #define p_prev	68
