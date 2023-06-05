@@ -3,26 +3,26 @@
 #ifndef pilot_names
 #define pilot_names
 
-#define p_ch	70
-#define p_ch_m	69
-#define p_ch_p	71
-#define p_next	64
-#define p_prev	68
-#define p_play	67
-#define p_minus	7
-#define p_plus	21
-#define p_eq	9
-#define p_0	22
-#define p_100	25
-#define p_200	13
-#define p_1	12		
-#define p_2	24	
-#define p_3	94	
-#define p_4	8	
-#define p_5	28	
-#define p_6	90	
-#define p_7	66	
-#define p_8	82
-#define p_9	74	
-	
+#define P_ON_OFF 69
+#define P_VOL_P 70
+#define P_FUNC 71
+#define P_PREV 68
+#define P_PLAY 64
+#define P_NEXT 67
+#define P_DOWN 7
+#define P_VOL_M 21
+#define P_UP 9
+#define P_0 22
+#define P_EQ 25
+#define P_ST 13
+#define P_1 12
+#define P_2 24
+#define P_3 94
+#define P_4 8
+#define P_5 28
+#define P_6 90
+#define P_7 66
+#define P_8 82
+#define P_9 74
+
 #endif

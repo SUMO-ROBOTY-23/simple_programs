@@ -1,0 +1,6 @@
+Przypisanie pinów:
+Sterownik silników: A0-A3
+Odbiornik diody IR: A8
+XSHUT do czujników dystansu: A4-A5
+SDA do I2C (czujniki dystansu): B7
+SCL do I2C (czujniki dystansu): B6
