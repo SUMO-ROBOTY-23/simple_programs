@@ -88,22 +88,16 @@ void setID() {
 }
 
 void read_dual_sensors() {
-  while (!lox1.isRangeComplete());
-  while (!lox2.isRangeComplete());
-  while (!lox3.isRangeComplete());
 
-
-  if (lox1.isRangeComplete()) {
+  if(lox1.waitRangeComplete()) {
     Serial.print("Distance 1 in mm: ");
     Serial.print(lox1.readRange());
   }
-
-  if (lox2.isRangeComplete()) {
+  if(lox2.waitRangeComplete()) {
     Serial.print(" Distance 2 in mm: ");
     Serial.print(lox2.readRange());
   }
-
-  if (lox3.isRangeComplete()) {
+  if(lox3.waitRangeComplete()) {
     Serial.print(" Distance 3 in mm: ");
     Serial.print(lox3.readRange());
   }
