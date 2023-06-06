@@ -54,7 +54,7 @@ void setID() {
   delay(10);
 
   Serial.println(F("First activated"));
-  
+
 
   // activating LOX2
   digitalWrite(SHT_LOX2, HIGH);
@@ -79,45 +79,33 @@ void setID() {
   }
 
   Serial.println(F("Third activated"));
+
+  lox1.startRangeContinuous();
+  lox2.startRangeContinuous();
+  lox3.startRangeContinuous();
+
+  Serial.println(F("Continous activated"));
 }
 
 void read_dual_sensors() {
+  while (!lox1.isRangeComplete());
+  while (!lox2.isRangeComplete());
+  while (!lox3.isRangeComplete());
 
-  // Serial.println(F("Start measurements"));
 
-
-  lox1.rangingTest(&measure1, false);  // pass in 'true' to get debug data printout!
-  lox2.rangingTest(&measure2, false);  // pass in 'true' to get debug data printout!
-  lox3.rangingTest(&measure3, false);  // pass in 'true' to get debug data printout!
-  
-  // Serial.println(F("End of measurements"));
-
-  // print sensor one reading
-  Serial.print(F("1: "));
-  if (measure1.RangeStatus != 4) {  // if not out of range
-    Serial.print(measure1.RangeMilliMeter);
-  } else {
-    Serial.print(F("Out of range"));
+  if (lox1.isRangeComplete()) {
+    Serial.print("Distance 1 in mm: ");
+    Serial.print(lox1.readRange());
   }
 
-  Serial.print(F(" "));
-
-  // print sensor two reading
-  Serial.print(F("2: "));
-  if (measure2.RangeStatus != 4) {
-    Serial.print(measure2.RangeMilliMeter);
-  } else {
-    Serial.print(F("Out of range"));
+  if (lox2.isRangeComplete()) {
+    Serial.print(" Distance 2 in mm: ");
+    Serial.print(lox2.readRange());
   }
 
-  Serial.print(F(" "));
-
-  // print sensor three reading
-  Serial.print(F("3: "));
-  if (measure3.RangeStatus != 4) {
-    Serial.print(measure3.RangeMilliMeter);
-  } else {
-    Serial.print(F("Out of range"));
+  if (lox3.isRangeComplete()) {
+    Serial.print(" Distance 3 in mm: ");
+    Serial.print(lox3.readRange());
   }
 
   Serial.println();
@@ -152,7 +140,14 @@ void setup() {
 }
 
 void loop() {
-
   read_dual_sensors();
-  delay(100);
+
+  // int time1 = micros();
+  // for (int i = 0; i < 100; ++i) {
+  //   read_dual_sensors();
+  // }
+  // int time2 = micros();
+
+  // Serial.println(s);
+  // Serial.println((time2 - time1) / 100000.0);
 }
