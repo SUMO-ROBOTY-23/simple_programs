@@ -104,10 +104,14 @@ public:
   void read_sensors();
   void print_measurements();
   void make_decision();
-  void execute_instruction();
+  void set_speed(int16_t new_left_speed, int16_t new_right_speed);
+  void run_decision();
 
 private:
   void setup_distance_sensors();
+  void execute_instruction(Instruction ins);
+  void execute_instruction(Rotate rotate_ins);
+  void execute_instruction(Go go_ins);
 
   UltrasoundSensor ultrasound_sensor;
   DistanceSensor distance_sensor1;

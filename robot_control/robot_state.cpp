@@ -68,7 +68,7 @@ Robot::Robot(Pins pins) :
       motor1(PWM_PWM, pins.motor1_pin1, pins.motor1_pin2), 
       motor2(PWM_PWM, pins.motor2_pin1, pins.motor2_pin2),
       IR_pin(pins.IR_pin) {
-  uint8_t const reflectance_pins[4] = {pins.reflectance_pin1, pins.reflectance_pin2, pins.reflectance_pin3, pins.reflectance_pin4};
+  uint8_t const reflectance_pins[REFLECTANCE_SENSOR_COUT] = {pins.reflectance_pin1, pins.reflectance_pin2, pins.reflectance_pin3, pins.reflectance_pin4};
   reflectance_sensors = ReflectanceSensors(reflectance_pins);
 
   motor_state = {0, 0};
@@ -152,6 +152,13 @@ void Robot::read_sensors() {
 
 
 void Robot::print_measurements() {
+  if (started) {
+    Serial.print("Started ");
+  } else {
+    Serial.print("Stopped ");
+
+  }
+
   Serial.print("Ultrasound: ");
   Serial.print(ultrasound_measurement);
 
@@ -185,8 +192,42 @@ void Robot::make_decision() {
     } 
     current_instructions.clear();
   }
+  IR_measurement = 0;
 
 
   // TODO rest of decision making
+}
+
+void Robot::set_speed(int16_t new_left_speed, int16_t new_right_speed) {
+  if (motor_state.left_speed != new_left_speed) {
+    motor_state.left_speed = new_left_speed;
+    motor1.setSpeed(new_left_speed);
+  }
+
+  if (motor_state.right_speed != new_right_speed) {
+    motor_state.right_speed = new_right_speed;
+    motor2.setSpeed(-new_right_speed);
+  }
+}
+
+void Robot::run_decision() {
+  if (!started) {
+    set_speed(0, 0);
+    return;
+  } 
+  if (!current_instructions.empty()) {
+    execute_instruction(*current_instructions.front());
+  }
+}
+
+void Robot::execute_instruction(Instruction ins) {
+  
+}
+
+void Robot::execute_instruction(Rotate rotate_ins) {
+  
+}
+
+void Robot::execute_instruction(Go go_ins) {
 
 }

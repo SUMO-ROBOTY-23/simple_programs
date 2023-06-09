@@ -45,5 +45,7 @@ void setup() {
 
 void loop() {
   robot.read_sensors();
+  robot.make_decision();
   robot.print_measurements();
+  robot.run_decision();
 }
