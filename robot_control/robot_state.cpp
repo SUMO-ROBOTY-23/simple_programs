@@ -1,4 +1,5 @@
 #include "robot_state.h"
+#include "pilot_names.h"
 #include "IRremote.hpp"
 
 
@@ -6,6 +7,8 @@
 #define  ADC_MAX_VALUE                   ((1 << ADC_BITS) - 1) // ADC accuracy of STM32 F411 is 12bit
 #define  ULTRASOUND_MAX_RANGE            520                   // The max measurement value of the module is 520cm
 #define  ULTRASOUND_CALIBRATION_CONST    (3300.0 / 5000.0)
+#define  WAIT_TIME                       5000
+#define  MAX_SPEED                       255
 
 
 void UltrasoundSensor::setup() {
@@ -52,9 +55,8 @@ void ReflectanceSensors::setup_sensors() {
   sensors.emittersOn();
 }
 
-void ReflectanceSensors::read_reflectance(uint16_t* sensorValues) {
-  sensors
-
+void ReflectanceSensors::read_reflectance(uint16_t* sensor_values) {
+  sensors.read(sensor_values);
 }
 
 
@@ -69,7 +71,6 @@ Robot::Robot(Pins pins) :
   uint8_t const reflectance_pins[4] = {pins.reflectance_pin1, pins.reflectance_pin2, pins.reflectance_pin3, pins.reflectance_pin4};
   reflectance_sensors = ReflectanceSensors(reflectance_pins);
 
-  current_instruction = Wait(5000);
   motor_state = {0, 0};
 }
 
@@ -122,6 +123,10 @@ void Robot::setup_distance_sensors() {
 }
 
 void Robot::setup_sensors() {
+  pinMode(IR_pin, INPUT);
+  IrReceiver.begin(IR_pin, ENABLE_LED_FEEDBACK);
+
+
   ultrasound_sensor.setup();
   setup_distance_sensors();
   reflectance_sensors.setup_sensors();
@@ -132,9 +137,56 @@ void Robot::read_sensors() {
 
   distance_sensor1.wait_ready();
   distance_measurements[0] = distance_sensor1.get_distance();
+  distance_sensor2.wait_ready();
   distance_measurements[1] = distance_sensor2.get_distance();
+  distance_sensor3.wait_ready();
   distance_measurements[2] = distance_sensor3.get_distance();
 
   reflectance_sensors.read_reflectance(reflectance_measurements);
+
+  if (IrReceiver.decode()) {
+        IR_measurement = IrReceiver.decodedIRData.command;
+        IrReceiver.resume();
+  }
+}
+
+
+void Robot::print_measurements() {
+  Serial.print("Ultrasound: ");
+  Serial.print(ultrasound_measurement);
+
+  Serial.print(" mm  Distance1: ");
+  Serial.print(distance_measurements[0]);
+  Serial.print(" mm  Distance2: ");
+  Serial.print(distance_measurements[1]);
+  Serial.print(" mm  Distance3: ");
+  Serial.print(distance_measurements[2]);
+
+  Serial.print(" mm  Reflectance1: ");
+  Serial.print(reflectance_measurements[0]);
+  Serial.print(" Reflectance2: ");
+  Serial.print(reflectance_measurements[1]);
+  Serial.print(" Reflectance3: ");
+  Serial.print(reflectance_measurements[2]);
+  Serial.print(" Reflectance4: ");
+  Serial.println(reflectance_measurements[3]);
+
+}
+
+void Robot::make_decision() {
+  if (!started && IR_measurement == P_ON_OFF) {
+    started = true;
+    current_instructions.push_back(new Wait(WAIT_TIME));
+    current_instructions.push_back(new Go(UINT16_MAX, MAX_SPEED)); // TODO change distance or speed
+  } else if (started && IR_measurement == P_FUNC) {
+    started = false;
+    for (auto ins_ptr : current_instructions) {
+      delete ins_ptr;
+    } 
+    current_instructions.clear();
+  }
+
+
+  // TODO rest of decision making
 
 }

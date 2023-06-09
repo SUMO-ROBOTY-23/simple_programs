@@ -2,11 +2,14 @@
 #define ROBOT_STATE_H
 
 #include <cstdint>
+#include <deque>
 #include "Adafruit_VL53L0X.h"
 #include "CytronMotorDriver.h"
 #include "QTRSensors.h"
 
 #define  REFLECTANCE_SENSOR_COUT 4
+
+using std::deque;
 
 typedef struct Pins_t {
   uint8_t motor1_pin1;
@@ -37,18 +40,23 @@ private:
 };
 
 class Rotate : public Instruction {
+public:
+  Rotate(float angle) : angle(angle) {}
 private:
   float angle;
 };
 
 class Go : public Instruction {
+public:
+  Go(float distance, int16_t speed) : distance(distance), speed(speed) {}
 private:
-  float distance;
+  int16_t speed;
+  uint16_t distance; // In millimeters
+  
 };
 
 class UltrasoundSensor {
 public:
-  UltrasoundSensor();
   UltrasoundSensor(uint8_t pin) : pin(pin) {}
   void setup();
   uint16_t get_distance();
@@ -58,7 +66,6 @@ private:
 
 class DistanceSensor {
 public:
-  DistanceSensor();
   DistanceSensor(uint8_t pin, uint8_t address) : pin(pin), address(address) {}
   void pin_output();
   void write_pin(uint32_t value);
@@ -78,7 +85,7 @@ public:
   ReflectanceSensors() {};
   ReflectanceSensors(uint8_t const pins[REFLECTANCE_SENSOR_COUT]);
   void setup_sensors();
-  void read_reflectance(uint16_t* sensorValues);
+  void read_reflectance(uint16_t* sensor_values);
 private:
   QTRSensors sensors;
   uint8_t reflectance_pins[REFLECTANCE_SENSOR_COUT]; 
@@ -95,6 +102,9 @@ public:
   Robot(Pins pins);
   void setup_sensors();
   void read_sensors();
+  void print_measurements();
+  void make_decision();
+  void execute_instruction();
 
 private:
   void setup_distance_sensors();
@@ -108,13 +118,15 @@ private:
 
   uint16_t ultrasound_measurement;
   uint16_t distance_measurements[3]; 
-  uint16_t reflectance_measurements[4]; 
+  uint16_t reflectance_measurements[REFLECTANCE_SENSOR_COUT]; 
   uint16_t IR_measurement;
 
-  Instruction current_instruction;
+  bool started;
+  deque<Instruction*> current_instructions;
   MotorState motor_state;
   CytronMD motor1;
   CytronMD motor2;
+
 };
 
 
