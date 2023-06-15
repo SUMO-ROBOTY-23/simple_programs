@@ -7,7 +7,7 @@
 #include "CytronMotorDriver.h"
 #include "QTRSensors.h"
 
-#define  REFLECTANCE_SENSOR_COUT 4
+#define  REFLECTANCE_SENSOR_COUT 2
 
 using std::deque;
 
@@ -30,29 +30,44 @@ typedef struct Pins_t {
   uint8_t IR_pin;
 } Pins;
 
-class Instruction {};
+typedef struct MotorState_t {
+  int16_t left_speed;
+  int16_t right_speed;
+} MotorState;
+
+class Instruction {
+public:
+  virtual void execute_instruction(MotorState* motor_state);
+  bool is_finished() {return finished;}
+protected:
+  bool finished;
+};
 
 class Wait : public Instruction {
 public:
   Wait(uint32_t milliseconds) : milliseconds(milliseconds) {}
+  void execute_instruction(MotorState* motor_state) override;
 private:
   uint32_t milliseconds;
 };
 
 class Rotate : public Instruction {
 public:
-  Rotate(float angle) : angle(angle) {}
+  Rotate(float angle, bool clockwise) : angle(angle), clockwise(clockwise) {}
+  void execute_instruction(MotorState* motor_state) override;
 private:
+  bool clockwise;
   float angle;
 };
 
 class Go : public Instruction {
 public:
-  Go(float distance, int16_t speed) : distance(distance), speed(speed) {}
+  Go(bool forward, int16_t speed, uint16_t distance) : forward(forward), speed(speed), distance(distance) {}
+  void execute_instruction(MotorState* motor_state) override;
 private:
+  bool forward;
   int16_t speed;
   uint16_t distance; // In millimeters
-  
 };
 
 class UltrasoundSensor {
@@ -91,11 +106,6 @@ private:
   uint8_t reflectance_pins[REFLECTANCE_SENSOR_COUT]; 
 };
 
-typedef struct MotorState_t {
-  int16_t left_speed;
-  int16_t right_speed;
-} MotorState;
-
 
 class Robot {
 public:
@@ -109,9 +119,6 @@ public:
 
 private:
   void setup_distance_sensors();
-  void execute_instruction(Instruction ins);
-  void execute_instruction(Rotate rotate_ins);
-  void execute_instruction(Go go_ins);
 
   UltrasoundSensor ultrasound_sensor;
   DistanceSensor distance_sensor1;
@@ -130,7 +137,6 @@ private:
   MotorState motor_state;
   CytronMD motor1;
   CytronMD motor2;
-
 };
 
 

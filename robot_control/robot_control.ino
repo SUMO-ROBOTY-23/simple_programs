@@ -14,8 +14,8 @@
 #define REFLECTANCE_PIN2    PA5
 #define REFLECTANCE_PIN3    PA6
 #define REFLECTANCE_PIN4    PA7
-#define ULTRASOUND_PIN      PA7
-#define IR_PIN              PA8
+#define ULTRASOUND_PIN      PB0
+#define IR_PIN              PB1
 
 Pins pins = {
   MOTOR1_PIN1,
@@ -47,5 +47,5 @@ void loop() {
   robot.read_sensors();
   robot.make_decision();
   robot.print_measurements();
-  robot.run_decision();
+  // robot.run_decision();
 }

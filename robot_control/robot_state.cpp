@@ -6,10 +6,45 @@
 #define  ADC_BITS                        12
 #define  ADC_MAX_VALUE                   ((1 << ADC_BITS) - 1) // ADC accuracy of STM32 F411 is 12bit
 #define  ULTRASOUND_MAX_RANGE            520                   // The max measurement value of the module is 520cm
-#define  ULTRASOUND_CALIBRATION_CONST    (3300.0 / 5000.0)
+#define  ULTRASOUND_CALIBRATION_CONST    (3300.0 / 5000.0) // TODO Change to number without division for faster evaluation
 #define  WAIT_TIME                       5000
 #define  MAX_SPEED                       255
+#define  REFRESH_TIME                    50 // TODO adjust
+#define  ROTATION_CONSTANT               1.0 // TODO adjust
+#define  ROBOT_SPEED                     1.0 // TODO adjust
 
+void Wait::execute_instruction(MotorState* motor_state) {
+  motor_state->left_speed = 0;
+  motor_state->right_speed = 0;
+  milliseconds -= REFRESH_TIME;
+  finished = milliseconds <= 0; 
+}
+
+void Rotate::execute_instruction(MotorState* motor_state) {
+  if (clockwise) {
+    motor_state->left_speed = MAX_SPEED;
+    motor_state->right_speed = -MAX_SPEED;
+  } else {
+    motor_state->left_speed = -MAX_SPEED;
+    motor_state->right_speed = MAX_SPEED;
+  }
+
+  angle -= ROTATION_CONSTANT;
+  finished = angle <= 0;
+}
+
+void Go::execute_instruction(MotorState* motor_state) {
+  if (forward) {
+    motor_state->left_speed = speed;
+    motor_state->right_speed = speed;
+  } else {
+    motor_state->left_speed = -speed;
+    motor_state->right_speed = -speed;
+  }
+
+  distance -= REFRESH_TIME * ROBOT_SPEED * speed / MAX_SPEED;
+  finished = distance <= 0;
+}
 
 void UltrasoundSensor::setup() {
   pinMode(pin, INPUT);
@@ -68,7 +103,8 @@ Robot::Robot(Pins pins) :
       motor1(PWM_PWM, pins.motor1_pin1, pins.motor1_pin2), 
       motor2(PWM_PWM, pins.motor2_pin1, pins.motor2_pin2),
       IR_pin(pins.IR_pin) {
-  uint8_t const reflectance_pins[REFLECTANCE_SENSOR_COUT] = {pins.reflectance_pin1, pins.reflectance_pin2, pins.reflectance_pin3, pins.reflectance_pin4};
+  // uint8_t const reflectance_pins[REFLECTANCE_SENSOR_COUT] = {pins.reflectance_pin1, pins.reflectance_pin2, pins.reflectance_pin3, pins.reflectance_pin4};
+  uint8_t const reflectance_pins[REFLECTANCE_SENSOR_COUT] = {pins.reflectance_pin1, pins.reflectance_pin2};
   reflectance_sensors = ReflectanceSensors(reflectance_pins);
 
   motor_state = {0, 0};
@@ -184,7 +220,7 @@ void Robot::make_decision() {
   if (!started && IR_measurement == P_ON_OFF) {
     started = true;
     current_instructions.push_back(new Wait(WAIT_TIME));
-    current_instructions.push_back(new Go(UINT16_MAX, MAX_SPEED)); // TODO change distance or speed
+    current_instructions.push_back(new Go(true, UINT16_MAX, MAX_SPEED)); // TODO change distance or speed
   } else if (started && IR_measurement == P_FUNC) {
     started = false;
     for (auto ins_ptr : current_instructions) {
@@ -196,6 +232,7 @@ void Robot::make_decision() {
 
 
   // TODO rest of decision making
+  // TODO push back next instruction or clear the queue and push new instruction
 }
 
 void Robot::set_speed(int16_t new_left_speed, int16_t new_right_speed) {
@@ -213,21 +250,12 @@ void Robot::set_speed(int16_t new_left_speed, int16_t new_right_speed) {
 void Robot::run_decision() {
   if (!started) {
     set_speed(0, 0);
-    return;
-  } 
-  if (!current_instructions.empty()) {
-    execute_instruction(*current_instructions.front());
+  } else if (!current_instructions.empty()) {
+    MotorState new_motor_state;
+    current_instructions.front()->execute_instruction(&new_motor_state);
+    set_speed(new_motor_state.left_speed, new_motor_state.right_speed);
+    if (current_instructions.front()->is_finished()) {
+      current_instructions.pop_front();
+    }
   }
-}
-
-void Robot::execute_instruction(Instruction ins) {
-  
-}
-
-void Robot::execute_instruction(Rotate rotate_ins) {
-  
-}
-
-void Robot::execute_instruction(Go go_ins) {
-
 }
