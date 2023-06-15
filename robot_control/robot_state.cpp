@@ -230,8 +230,15 @@ void Robot::make_decision() {
     current_instructions.clear();
   }
   IR_measurement = 0;
+  
+  // najpierw sprawdzamy, czy coś jest przed nami na odległość ok 10 cm, jeśli tak - jazda na przód
 
+  //jeśli nie, to sprawdzamy, czy najeżdżamy na białą linię - jeśli tak - jazda w tył
 
+  //jeśli przed nami nic nie ma na odległość 10 cm, to sprawdzamywyniki czujników laserowych i jeszcze raz dźwiękowych
+  //jeśli coś przed nami jest, to  korygujemy trasę na czujnik, który wykrywa najbliżej i jedziemy w tą stornę (dźwiękowy - 0 stopni, lewy -15 stopni, prawy 15 stopni (lub inna wartość)
+  //jeśli czujniki nic nie wykryły- obróć się
+  
   // TODO rest of decision making
   // TODO push back next instruction or clear the queue and push new instruction
 }
