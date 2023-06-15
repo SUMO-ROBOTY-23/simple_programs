@@ -12,6 +12,7 @@
 #define  REFRESH_TIME                    50 // TODO adjust
 #define  ROTATION_CONSTANT               1.0 // TODO adjust
 #define  ROBOT_SPEED                     1.0 // TODO adjust
+#define  RIGHT_MOTOR_CORRECTION          0.8 // TODO adjust
 
 void Wait::execute_instruction(MotorState* motor_state) {
   motor_state->left_speed = 0;
@@ -23,10 +24,10 @@ void Wait::execute_instruction(MotorState* motor_state) {
 void Rotate::execute_instruction(MotorState* motor_state) {
   if (clockwise) {
     motor_state->left_speed = MAX_SPEED;
-    motor_state->right_speed = -MAX_SPEED;
+    motor_state->right_speed = -MAX_SPEED * RIGHT_MOTOR_CORRECTION;
   } else {
     motor_state->left_speed = -MAX_SPEED;
-    motor_state->right_speed = MAX_SPEED;
+    motor_state->right_speed = MAX_SPEED * RIGHT_MOTOR_CORRECTION;
   }
 
   angle -= ROTATION_CONSTANT;
@@ -36,10 +37,10 @@ void Rotate::execute_instruction(MotorState* motor_state) {
 void Go::execute_instruction(MotorState* motor_state) {
   if (forward) {
     motor_state->left_speed = speed;
-    motor_state->right_speed = speed;
+    motor_state->right_speed = speed * RIGHT_MOTOR_CORRECTION;
   } else {
     motor_state->left_speed = -speed;
-    motor_state->right_speed = -speed;
+    motor_state->right_speed = -speed * RIGHT_MOTOR_CORRECTION;
   }
 
   distance -= REFRESH_TIME * ROBOT_SPEED * speed / MAX_SPEED;
