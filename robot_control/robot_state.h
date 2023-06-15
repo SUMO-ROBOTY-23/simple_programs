@@ -119,6 +119,7 @@ public:
 
 private:
   void setup_distance_sensors();
+  void clear_queue();
 
   UltrasoundSensor ultrasound_sensor;
   DistanceSensor distance_sensor1;

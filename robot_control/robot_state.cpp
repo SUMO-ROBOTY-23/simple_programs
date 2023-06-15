@@ -13,6 +13,7 @@
 #define  ROTATION_CONSTANT               1.0 // TODO adjust
 #define  ROBOT_SPEED                     1.0 // TODO adjust
 #define  RIGHT_MOTOR_CORRECTION          0.8 // TODO adjust
+#define  MAX_WHITE_REFLECTANCE           50 // TODO adjust
 
 void Wait::execute_instruction(MotorState* motor_state) {
   motor_state->left_speed = 0;
@@ -24,10 +25,10 @@ void Wait::execute_instruction(MotorState* motor_state) {
 void Rotate::execute_instruction(MotorState* motor_state) {
   if (clockwise) {
     motor_state->left_speed = MAX_SPEED;
-    motor_state->right_speed = -MAX_SPEED * RIGHT_MOTOR_CORRECTION;
+    motor_state->right_speed = -MAX_SPEED;
   } else {
     motor_state->left_speed = -MAX_SPEED;
-    motor_state->right_speed = MAX_SPEED * RIGHT_MOTOR_CORRECTION;
+    motor_state->right_speed = MAX_SPEED;
   }
 
   angle -= ROTATION_CONSTANT;
@@ -37,10 +38,10 @@ void Rotate::execute_instruction(MotorState* motor_state) {
 void Go::execute_instruction(MotorState* motor_state) {
   if (forward) {
     motor_state->left_speed = speed;
-    motor_state->right_speed = speed * RIGHT_MOTOR_CORRECTION;
+    motor_state->right_speed = speed;
   } else {
     motor_state->left_speed = -speed;
-    motor_state->right_speed = -speed * RIGHT_MOTOR_CORRECTION;
+    motor_state->right_speed = -speed;
   }
 
   distance -= REFRESH_TIME * ROBOT_SPEED * speed / MAX_SPEED;
@@ -115,36 +116,38 @@ void Robot::setup_distance_sensors() {
   Wire.begin();  // TODO Necessary?
 
   distance_sensor1.pin_output();
-  distance_sensor2.pin_output();
+  // distance_sensor2.pin_output();
   distance_sensor3.pin_output();
 
   // TODO Remove those three lines?
   distance_sensor1.write_pin(LOW);
-  distance_sensor2.write_pin(LOW);
+  // distance_sensor2.write_pin(LOW);
   distance_sensor3.write_pin(LOW);
 
   distance_sensor1.write_pin(LOW);
-  distance_sensor2.write_pin(LOW);
+  // distance_sensor2.write_pin(LOW);
   distance_sensor3.write_pin(LOW);
   delay(10);
 
   distance_sensor1.write_pin(HIGH);
-  distance_sensor2.write_pin(LOW);
+  // distance_sensor2.write_pin(LOW);
   distance_sensor3.write_pin(LOW);
 
   if (!distance_sensor1.begin()) {
     Serial.println(F("Failed to boot first VL53L0X"));
+    Serial.flush();
     while (1); // TODO Restart program
   }
   delay(10);
 
-  distance_sensor2.write_pin(HIGH);
-  delay(10);
+  // distance_sensor2.write_pin(HIGH);
+  // delay(10);
 
-  if (!distance_sensor2.begin()) {
-    Serial.println(F("Failed to boot second VL53L0X"));
-    while (1); // TODO Restart program
-  }
+  // if (!distance_sensor2.begin()) {
+  //   Serial.println(F("Failed to boot second VL53L0X"));
+  //   Serial.flush();
+  //   while (1); // TODO Restart program
+  // }
 
   distance_sensor3.write_pin(HIGH);
   delay(10);
@@ -155,7 +158,7 @@ void Robot::setup_distance_sensors() {
   }
 
   distance_sensor1.start_continuous();
-  distance_sensor2.start_continuous();
+  // distance_sensor2.start_continuous();
   distance_sensor3.start_continuous();
 }
 
@@ -174,8 +177,8 @@ void Robot::read_sensors() {
 
   distance_sensor1.wait_ready();
   distance_measurements[0] = distance_sensor1.get_distance();
-  distance_sensor2.wait_ready();
-  distance_measurements[1] = distance_sensor2.get_distance();
+  // distance_sensor2.wait_ready();
+  // distance_measurements[1] = distance_sensor2.get_distance();
   distance_sensor3.wait_ready();
   distance_measurements[2] = distance_sensor3.get_distance();
 
@@ -217,19 +220,54 @@ void Robot::print_measurements() {
 
 }
 
-void Robot::make_decision() {
-  if (!started && IR_measurement == P_ON_OFF) {
-    started = true;
-    current_instructions.push_back(new Wait(WAIT_TIME));
-    current_instructions.push_back(new Go(true, UINT16_MAX, MAX_SPEED)); // TODO change distance or speed
-  } else if (started && IR_measurement == P_FUNC) {
-    started = false;
-    for (auto ins_ptr : current_instructions) {
+void Robot::clear_queue() {
+  for (auto ins_ptr : current_instructions) {
       delete ins_ptr;
     } 
     current_instructions.clear();
+}
+
+void Robot::make_decision() {
+  if (!started && IR_measurement == P_ON_OFF) {
+    started = true;
+    // current_instructions.push_back(new Wait(WAIT_TIME));
+    current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX)); // TODO change distance or speed
+  } else if (started && IR_measurement == P_FUNC) {
+    started = false;
+    clear_queue();
   }
   IR_measurement = 0;
+
+
+  // if (ultrasound_measurement <= 500) {
+  //   clear_queue();
+  //   current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX));
+  // } else if (reflectance_measurements[0] <= MAX_WHITE_REFLECTANCE) {
+  //   clear_queue();
+  //   current_instructions.push_back(new Go(false, MAX_SPEED, 50));
+  //   current_instructions.push_back(new Rotate(150, true));
+  //   current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX));
+  // } else if (reflectance_measurements[1] <= MAX_WHITE_REFLECTANCE) {
+  //   clear_queue();
+  //   current_instructions.push_back(new Go(false, 50, MAX_SPEED));
+  //   current_instructions.push_back(new Rotate(150, false));
+  //   current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX));
+  // } else if (distance_measurements[0] <= 800 || distance_measurements[2] <= 800) {
+  //   if (distance_measurements[0] < distance_measurements[2]) {
+  //     clear_queue();
+  //     current_instructions.push_back(new Rotate(30, false));
+  //   } else {
+  //     clear_queue();
+  //     current_instructions.push_back(new Rotate(30, true));
+  //   }
+  // } else if (current_instructions.empty()) {
+  //   current_instructions.push_back(new Rotate(180, true));
+  //   current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX));
+  // }
+
+  
+  
+
   
   // najpierw sprawdzamy, czy coś jest przed nami na odległość ok 10 cm, jeśli tak - jazda na przód
 
@@ -246,7 +284,7 @@ void Robot::make_decision() {
 void Robot::set_speed(int16_t new_left_speed, int16_t new_right_speed) {
   if (motor_state.left_speed != new_left_speed) {
     motor_state.left_speed = new_left_speed;
-    motor1.setSpeed(new_left_speed);
+    motor1.setSpeed(new_left_speed * RIGHT_MOTOR_CORRECTION);
   }
 
   if (motor_state.right_speed != new_right_speed) {
@@ -259,11 +297,17 @@ void Robot::run_decision() {
   if (!started) {
     set_speed(0, 0);
   } else if (!current_instructions.empty()) {
-    MotorState new_motor_state;
-    current_instructions.front()->execute_instruction(&new_motor_state);
-    set_speed(new_motor_state.left_speed, new_motor_state.right_speed);
-    if (current_instructions.front()->is_finished()) {
-      current_instructions.pop_front();
-    }
+    set_speed(MAX_SPEED, MAX_SPEED);
+
+
+
+
+    // MotorState new_motor_state;
+    // current_instructions.front()->execute_instruction(&new_motor_state);
+    // set_speed(new_motor_state.left_speed, new_motor_state.right_speed);
+    // if (current_instructions.front()->is_finished()) {
+    //   delete current_instructions.front();
+    //   current_instructions.pop_front();
+    // }
   }
 }
