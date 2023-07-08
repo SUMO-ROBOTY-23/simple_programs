@@ -134,6 +134,7 @@ private:
   uint16_t IR_measurement;
 
   bool started;
+  bool wait;
   deque<Instruction*> current_instructions;
   MotorState motor_state;
   CytronMD motor1;

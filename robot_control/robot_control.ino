@@ -39,18 +39,31 @@ Pins pins = {
 Robot robot = Robot(pins);
 
 void setup() {
-  Serial.begin(9600); // TODO Remove 
+  Serial.begin(9600); // TODO Remove
+  
   // while (!Serial) { delay(1); }
   Serial.println("Start");
   Serial.flush();
+
+//  pinMode(PC13, INPUT);
+//  digitalWrite(PC13, LOW);
 
 
   robot.setup_sensors();
 }
 
 void loop() {
+//  unsigned long time1, time2;
+//  time1 = micros();
+  
   robot.read_sensors();
   robot.make_decision();
-  robot.print_measurements();
   robot.run_decision();
+
+//  time2 = micros();
+//  Serial.println(time2 - time1);
+
+  
+  
+  robot.print_measurements();
 }

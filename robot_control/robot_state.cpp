@@ -9,11 +9,11 @@
 #define  ULTRASOUND_CALIBRATION_CONST    (3300.0 / 5000.0) // TODO Change to number without division for faster evaluation
 #define  WAIT_TIME                       5000
 #define  MAX_SPEED                       255
-#define  REFRESH_TIME                    50 // TODO adjust
-#define  ROTATION_CONSTANT               1.0 // TODO adjust
-#define  ROBOT_SPEED                     1.0 // TODO adjust
-#define  RIGHT_MOTOR_CORRECTION          0.8 // TODO adjust
-#define  MAX_WHITE_REFLECTANCE           50 // TODO adjust
+#define  REFRESH_TIME                    35.7 // TODO adjust
+#define  ROTATION_CONSTANT               0.063 // TODO adjust
+#define  ROBOT_SPEED                     0.11 // TODO adjust
+#define  RIGHT_MOTOR_CORRECTION          0.96 // TODO adjust
+#define  MAX_WHITE_REFLECTANCE           75 // TODO adjust
 
 void Wait::execute_instruction(MotorState* motor_state) {
   motor_state->left_speed = 0;
@@ -31,7 +31,7 @@ void Rotate::execute_instruction(MotorState* motor_state) {
     motor_state->right_speed = MAX_SPEED;
   }
 
-  angle -= ROTATION_CONSTANT;
+  angle -= ROTATION_CONSTANT * REFRESH_TIME;
   finished = angle <= 0;
 }
 
@@ -230,40 +230,47 @@ void Robot::clear_queue() {
 void Robot::make_decision() {
   if (!started && IR_measurement == P_ON_OFF) {
     started = true;
-    // current_instructions.push_back(new Wait(WAIT_TIME));
+//    digitalWrite(PC13, HIGH);
+    delay(5000);
+//     current_instructions.push_back(new Wait(WAIT_TIME));
+//     wait = true;
     current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX)); // TODO change distance or speed
   } else if (started && IR_measurement == P_FUNC) {
+//    digitalWrite(PC13, LOW);
     started = false;
     clear_queue();
   }
   IR_measurement = 0;
 
+//  if (wait) {
+//    return;
+//  }
 
-  // if (ultrasound_measurement <= 500) {
-  //   clear_queue();
-  //   current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX));
-  // } else if (reflectance_measurements[0] <= MAX_WHITE_REFLECTANCE) {
-  //   clear_queue();
-  //   current_instructions.push_back(new Go(false, MAX_SPEED, 50));
-  //   current_instructions.push_back(new Rotate(150, true));
-  //   current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX));
-  // } else if (reflectance_measurements[1] <= MAX_WHITE_REFLECTANCE) {
-  //   clear_queue();
-  //   current_instructions.push_back(new Go(false, 50, MAX_SPEED));
-  //   current_instructions.push_back(new Rotate(150, false));
-  //   current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX));
-  // } else if (distance_measurements[0] <= 800 || distance_measurements[2] <= 800) {
-  //   if (distance_measurements[0] < distance_measurements[2]) {
-  //     clear_queue();
-  //     current_instructions.push_back(new Rotate(30, false));
-  //   } else {
-  //     clear_queue();
-  //     current_instructions.push_back(new Rotate(30, true));
-  //   }
-  // } else if (current_instructions.empty()) {
-  //   current_instructions.push_back(new Rotate(180, true));
-  //   current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX));
-  // }
+   if (ultrasound_measurement <= 500) {
+     clear_queue();
+     current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX));
+   } else if (reflectance_measurements[0] <= MAX_WHITE_REFLECTANCE) {
+     clear_queue();
+     current_instructions.push_back(new Go(false, MAX_SPEED, 50));
+     current_instructions.push_back(new Rotate(150, true));
+     current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX));
+   } else if (reflectance_measurements[1] <= MAX_WHITE_REFLECTANCE) {
+     clear_queue();
+     current_instructions.push_back(new Go(false, 50, MAX_SPEED));
+     current_instructions.push_back(new Rotate(150, false));
+     current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX));
+   } else if (distance_measurements[0] <= 800 || distance_measurements[2] <= 800) {
+     if (distance_measurements[0] < distance_measurements[2]) {
+       clear_queue();
+       current_instructions.push_back(new Rotate(30, false));
+     } else {
+       clear_queue();
+       current_instructions.push_back(new Rotate(30, true));
+     }
+   } else if (current_instructions.empty()) {
+     current_instructions.push_back(new Rotate(180, true));
+     current_instructions.push_back(new Go(true, MAX_SPEED, UINT16_MAX));
+   }
 
   
   
@@ -297,17 +304,15 @@ void Robot::run_decision() {
   if (!started) {
     set_speed(0, 0);
   } else if (!current_instructions.empty()) {
-    set_speed(MAX_SPEED, MAX_SPEED);
+//    set_speed(MAX_SPEED, MAX_SPEED);
 
-
-
-
-    // MotorState new_motor_state;
-    // current_instructions.front()->execute_instruction(&new_motor_state);
-    // set_speed(new_motor_state.left_speed, new_motor_state.right_speed);
-    // if (current_instructions.front()->is_finished()) {
-    //   delete current_instructions.front();
-    //   current_instructions.pop_front();
-    // }
+     MotorState new_motor_state;
+     current_instructions.front()->execute_instruction(&new_motor_state);
+     set_speed(new_motor_state.left_speed, new_motor_state.right_speed);
+     if (current_instructions.front()->is_finished()) {
+//        wait = false;
+       delete current_instructions.front();
+       current_instructions.pop_front();
+     }
   }
 }
